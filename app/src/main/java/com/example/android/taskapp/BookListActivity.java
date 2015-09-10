@@ -1,37 +1,35 @@
 package com.example.android.taskapp;
 
-import android.content.Context;
-import android.database.Cursor;
+
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.CursorAdapter;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
-import android.widget.SimpleCursorAdapter;
 
 import com.example.android.taskapp.api.ApiInterface;
 import com.example.android.taskapp.model.Book;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import com.squareup.okhttp.OkHttpClient;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import retrofit.Callback;
 import retrofit.RestAdapter;
 import retrofit.RetrofitError;
+import retrofit.client.OkClient;
 import retrofit.client.Response;
 
 public class BookListActivity extends AppCompatActivity {
 
-    static final String API_URL = "http://192.168.0.104:8080/books";
+    static final String API_URL = "http://192.168.0.101/books";
     ListView books_listview;
     RestAdapter restAdapter;
 
@@ -41,13 +39,20 @@ public class BookListActivity extends AppCompatActivity {
         setContentView(R.layout.activity_book_list);
         books_listview = (ListView) findViewById(R.id.books_listview);
 
-        restAdapter = new RestAdapter.Builder().setEndpoint(API_URL).build();
+        OkHttpClient mOkHttpClient = new OkHttpClient();
+        mOkHttpClient.setConnectTimeout(15000, TimeUnit.MILLISECONDS);
+        mOkHttpClient.setReadTimeout(15000,TimeUnit.MILLISECONDS);
+
+        restAdapter = new RestAdapter.Builder()
+                .setEndpoint(API_URL)
+                .setClient(new OkClient(mOkHttpClient))
+                .setLogLevel(RestAdapter.LogLevel.FULL)
+                .build();
         ApiInterface methods = restAdapter.create(ApiInterface.class);
 
-        Callback cb = new Callback() {
+        Callback<List<Book>> cb = new Callback<List<Book>>() {
             @Override
-            public void success(Object o, Response response) {
-                List<Book> books = (List<Book>) o;
+            public void success(List<Book> books, Response response) {
                 //Log.v("BookListActivity", booksString);
                 //TypeToken<List<Book>> token = new TypeToken<List<Book>>() {};
                 //List<Book> books = new Gson().fromJson(booksString, token.getType());
@@ -57,6 +62,8 @@ public class BookListActivity extends AppCompatActivity {
                     HashMap<String, Object> bookmap = new HashMap<>();
 
                     try {
+
+                        bookmap.put(b.getClass().getField("book_id").getName(),b.getBook_id());
                         bookmap.put(b.getClass().getField("author").getName(),b.getAuthor());
                         bookmap.put(b.getClass().getField("categories").getName(),b.getCategories());
                         bookmap.put(b.getClass().getField("lastCheckedOut").getName(),b.getLastCheckedOut());
@@ -83,6 +90,16 @@ public class BookListActivity extends AppCompatActivity {
         };
         methods.getBooks(cb);
 
+        books_listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+                HashMap<String, Object> cursor = (HashMap<String, Object>) adapterView.getItemAtPosition(position);
+                Intent intent = new Intent(getApplication(), BookDetailActivity.class);
+                intent.putExtra("book_title", (String) cursor.get("title"));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                getApplication().startActivity(intent);
+            }
+        });
     }
 
     @Override
@@ -100,7 +117,9 @@ public class BookListActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_add) {
+            Intent intent = new Intent(this,AddBookActivity.class);
+            startActivity(intent);
             return true;
         }
 

@@ -5,20 +5,31 @@ import com.google.gson.annotations.Expose;
 public class Book {
 
     @Expose
-    private String author;
-    @Expose
-    private String categories;
-    @Expose
-    private String lastCheckedOut;
-    @Expose
-    private String lastCheckedOutBy;
-    @Expose
-    private String publisher;
-    @Expose
-    private String title;
-    @Expose
-    private String url;
+    public int book_id;
 
+    @Expose
+    public String author;
+    @Expose
+    public String categories;
+    @Expose
+    public String lastCheckedOut;
+    @Expose
+    public String lastCheckedOutBy;
+    @Expose
+    public String publisher;
+    @Expose
+    public String title;
+    @Expose
+    public String url;
+
+    public Book(String title, String author, String categories, String publisher){
+        this.title = title;
+        this.author = author;
+        this.categories = categories;
+        this.publisher = publisher;
+        this.lastCheckedOut = null;
+        this.lastCheckedOutBy = null;
+    }
 
     public String getAuthor() {
         return author;
@@ -76,4 +87,11 @@ public class Book {
         this.url = url;
     }
 
+    public int getBook_id() {
+        return book_id;
+    }
+
+    public void setBook_id(int book_id) {
+        this.book_id = book_id;
+    }
 }
