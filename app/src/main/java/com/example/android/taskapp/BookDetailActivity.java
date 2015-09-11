@@ -1,10 +1,13 @@
 package com.example.android.taskapp;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
@@ -14,6 +17,7 @@ import com.example.android.taskapp.model.Book;
 import com.squareup.okhttp.OkHttpClient;
 
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import retrofit.Callback;
 import retrofit.RestAdapter;
@@ -21,7 +25,7 @@ import retrofit.RetrofitError;
 import retrofit.client.OkClient;
 import retrofit.client.Response;
 
-public class BookDetailActivity extends AppCompatActivity {
+public class BookDetailActivity extends AppCompatActivity implements View.OnClickListener {
 
     static final String API_URL = "http://192.168.0.101/books";
     RestAdapter restAdapter;
@@ -31,6 +35,8 @@ public class BookDetailActivity extends AppCompatActivity {
     TextView bookPublisher;
     TextView bookCheckout;
     Button checkoutSubmit;
+    ApiInterface methods;
+    String username;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,13 +51,14 @@ public class BookDetailActivity extends AppCompatActivity {
         bookPublisher = (TextView) findViewById(R.id.book_publisher);
         bookCheckout = (TextView) findViewById(R.id.book_checkout);
         checkoutSubmit = (Button) findViewById(R.id.checkout_submit);
+        checkoutSubmit.setOnClickListener(this);
 
         restAdapter = new RestAdapter.Builder()
                 .setEndpoint(API_URL)
                 .setClient(new OkClient(mOkHttpClient))
                 .setLogLevel(RestAdapter.LogLevel.FULL)
                 .build();
-        ApiInterface methods = restAdapter.create(ApiInterface.class);
+        methods = restAdapter.create(ApiInterface.class);
 
         Callback<Book> cb = new Callback<Book>() {
             @Override
@@ -97,5 +104,28 @@ public class BookDetailActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onClick(View v) {
+        Callback<Void> cb = new Callback<Void>() {
+            @Override
+            public void success(Void aVoid, Response response) {
+                Intent intent = getSupportParentActivityIntent();
+                startActivity(intent);
+            }
+
+            @Override
+            public void failure(RetrofitError error) {
+                error.printStackTrace();
+            }
+        };
+        Account [] accounts = AccountManager.get(this).getAccountsByType("com.google");
+        if (accounts.length > 0) {
+            username = accounts[0].name;
+        } else {
+            username = null;
+        }
+        methods.checkoutBook(bookTitle.getText().toString(), username, cb);
     }
 }

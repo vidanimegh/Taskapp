@@ -10,6 +10,7 @@ import retrofit.http.Body;
 import retrofit.http.FormUrlEncoded;
 import retrofit.http.GET;
 import retrofit.http.POST;
+import retrofit.http.PUT;
 import retrofit.http.Path;
 import retrofit.http.Query;
 
@@ -26,4 +27,7 @@ public interface ApiInterface {
 
     @POST("/add_book.php")
     void addBook(@Body Book book, Callback<Void> cb);
+
+    @GET("/checkout.php")
+    void checkoutBook(@Query("title") String title, @Query("checkedoutby") String checkedOutBy, Callback<Void> cb);
 }
